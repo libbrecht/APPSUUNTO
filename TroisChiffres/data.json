@@ -4,7 +4,7 @@
   "plafond_A": "167",
   "plafond_B": "165",
   "plan_initial": "0",
-  "zones": "",
+  "zones": "0-11.6 -4; 40.2-42.0 m163 a165; 44.7-99 libre",
   "marge": "3",
   "seuils_vz": "300 150",
   "persistance": "20",
