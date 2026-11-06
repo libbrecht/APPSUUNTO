@@ -165,6 +165,30 @@ test('main.js : seules les fonctions de rappel sont déclarées « function »',
   for (const n of ast.body) assert.ok(['VariableDeclaration', 'FunctionDeclaration'].includes(n.type), n.type);
 });
 
+// Sur la Suunto Vertical, un main.js contenant une expression régulière
+// est refusé à la compilation (journal de la montre : « ERR DUKTAPE :
+// Compiling js failed: SyntaxError », puis « Zapp load failed »), alors
+// que le minifieur, Node et ESLint l'acceptent. La montre affiche alors un
+// trompeur « nombre maximal d'apps SuuntoPlus activées ».
+test('main.js : aucune expression régulière (refusées par la montre)', () => {
+  const regex = [];
+  const ast = acorn.parse(code, { ecmaVersion: 5, locations: true });
+  const visiter = (n) => {
+    if (!n || typeof n.type !== 'string') return;
+    if (n.type === 'Literal' && n.regex) regex.push(`/${n.regex.pattern}/ ligne ${n.loc.start.line}`);
+    if ((n.type === 'NewExpression' || n.type === 'CallExpression') && n.callee.name === 'RegExp') {
+      regex.push(`RegExp() ligne ${n.loc.start.line}`);
+    }
+    for (const k of Object.keys(n)) {
+      const v = n[k];
+      if (Array.isArray(v)) v.forEach(visiter);
+      else if (v && typeof v.type === 'string') visiter(v);
+    }
+  };
+  visiter(ast);
+  assert.deepEqual(regex, []);
+});
+
 test('main.js : passe la transformation du minifieur (noms d\'entrées/sorties connus)', () => {
   assert.doesNotThrow(() => minifier(code, manifeste));
 });

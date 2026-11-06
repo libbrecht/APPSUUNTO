@@ -179,6 +179,80 @@ var gabaritDepuis;
 // ---------------------------------------------------------------------
 // Lecture des réglages
 // ---------------------------------------------------------------------
+// Pas d'expressions régulières : le moteur JavaScript de la montre les
+// refuse à la compilation (« Compiling js failed: SyntaxError »), alors
+// que le minifieur et Node les acceptent. Tout se lit caractère par
+// caractère.
+var estBlanc = function (c) {
+  return c === ' ' || c === '\t' || c === '\n' || c === '\r';
+};
+
+var estChiffre = function (c) {
+  return c >= '0' && c <= '9' && c.length === 1;
+};
+
+var nettoyer = function (s) {
+  var debut = 0;
+  var fin = s.length;
+  while (debut < fin && estBlanc(s.charAt(debut))) {
+    debut++;
+  }
+  while (fin > debut && estBlanc(s.charAt(fin - 1))) {
+    fin--;
+  }
+  return s.substring(debut, fin);
+};
+
+// Découpe sur les blancs, sans morceau vide.
+var mots = function (s) {
+  var r = [];
+  var courant = '';
+  var i;
+  var c;
+  for (i = 0; i < s.length; i++) {
+    c = s.charAt(i);
+    if (estBlanc(c)) {
+      if (courant !== '') {
+        r.push(courant);
+        courant = '';
+      }
+    } else {
+      courant += c;
+    }
+  }
+  if (courant !== '') {
+    r.push(courant);
+  }
+  return r;
+};
+
+// Au moins un chiffre, et rien d'autre, à partir de la position debut.
+var queDesChiffres = function (s, debut) {
+  var i;
+  if (s.length <= debut) {
+    return false;
+  }
+  for (i = debut; i < s.length; i++) {
+    if (!estChiffre(s.charAt(i))) {
+      return false;
+    }
+  }
+  return true;
+};
+
+// « 12 », « 11.6 » ou « 11,6 » : des chiffres, puis éventuellement un
+// séparateur suivi de chiffres.
+var estDecimal = function (s) {
+  var sep = s.indexOf('.');
+  if (sep < 0) {
+    sep = s.indexOf(',');
+  }
+  if (sep < 0) {
+    return queDesChiffres(s, 0);
+  }
+  return queDesChiffres(s.substring(0, sep), 0) && queDesChiffres(s, sep + 1);
+};
+
 var lireReglage = function (cle) {
   var v = null;
   if (typeof localStorage !== 'undefined' && localStorage) {
@@ -187,7 +261,7 @@ var lireReglage = function (cle) {
   if (v === null || v === undefined) {
     return '';
   }
-  return ('' + v).replace(/^\s+|\s+$/g, '');
+  return nettoyer('' + v);
 };
 
 var borner = function (v, mini, maxi) {
@@ -210,10 +284,17 @@ var lireEntier = function (cle, defaut, mini, maxi) {
 
 // « 160 165 150 » (espaces, virgules, points-virgules ou barres acceptés)
 var lireNombres = function (texte) {
-  var morceaux = texte.replace(/[,;\/]/g, ' ').split(' ');
+  var propre = '';
+  var morceaux;
   var r = [];
   var i;
+  var c;
   var v;
+  for (i = 0; i < texte.length; i++) {
+    c = texte.charAt(i);
+    propre += (c === ',' || c === ';' || c === '/') ? ' ' : c;
+  }
+  morceaux = propre.split(' ');
   for (i = 0; i < morceaux.length; i++) {
     if (morceaux[i] !== '') {
       v = parseFloat(morceaux[i]);
@@ -240,23 +321,29 @@ var lireCibles = function (cle, p, m, d) {
 // l'ordre où elles sont écrites : un décalage s'ajoute, une valeur fixée
 // remplace ; en cas de conflit, la dernière tranche l'emporte.
 var lireZones = function (texte) {
-  var tranches = texte.replace(/−/g, '-').split(';');
+  // Le signe « − » (U+2212) est accepté comme un tiret.
+  var tranches = texte.split('−').join('-').split(';');
   var n = 0;
   var i;
   var j;
   var jetons;
-  var bornes;
+  var tiret;
+  var debutKm;
+  var finKm;
   var o;
   var jeton;
   var lettre;
+  var c0;
   var v;
   for (i = 0; i < tranches.length && n < MAX_TRANCHES; i++) {
-    jetons = tranches[i].replace(/^\s+|\s+$/g, '').split(/\s+/);
-    bornes = /^(\d+(?:[.,]\d+)?)-(\d+(?:[.,]\d+)?)$/.exec(jetons[0]);
-    if (bornes && jetons.length > 1) {
+    jetons = mots(tranches[i]);
+    tiret = jetons.length > 0 ? jetons[0].indexOf('-') : -1;
+    debutKm = tiret > 0 ? jetons[0].substring(0, tiret) : '';
+    finKm = tiret > 0 ? jetons[0].substring(tiret + 1) : '';
+    if (tiret > 0 && estDecimal(debutKm) && estDecimal(finKm) && jetons.length > 1) {
       o = B_ZONES + n * Z_TAILLE;
-      tampon[o] = parseFloat(bornes[1].replace(',', '.'));
-      tampon[o + 1] = parseFloat(bornes[2].replace(',', '.'));
+      tampon[o] = parseFloat(debutKm.replace(',', '.'));
+      tampon[o + 1] = parseFloat(finKm.replace(',', '.'));
       tampon[o + 2] = 0;
       tampon[o + 3] = NaN;
       tampon[o + 4] = NaN;
@@ -265,9 +352,11 @@ var lireZones = function (texte) {
       tampon[o + 7] = 0;
       for (j = 1; j < jetons.length; j++) {
         jeton = jetons[j].toLowerCase();
-        if (/^[+\-]\d+$/.test(jeton)) {
+        c0 = jeton.charAt(0);
+        if ((c0 === '+' || c0 === '-') && queDesChiffres(jeton, 1)) {
           tampon[o + 2] += parseInt(jeton, 10);
-        } else if (/^[pmda]\d+$/.test(jeton)) {
+        } else if ((c0 === 'p' || c0 === 'm' || c0 === 'd' || c0 === 'a') &&
+            queDesChiffres(jeton, 1)) {
           lettre = jeton.charAt(0);
           v = borner(parseInt(jeton.substring(1), 10), 60, 230);
           if (lettre === 'p') {
