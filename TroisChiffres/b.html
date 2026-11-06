@@ -1,0 +1,61 @@
+<!--
+  Trois Chiffres : ecran bilan (controle au ravito et bilan).
+  FC moyenne et temps par terrain, VAM moyenne en montee, temps passe
+  au-dessus des cibles (rouge).
+  Bouton bas ou toucher : retour a l'ecran principal (automatique apres 30 s).
+-->
+<uiView onTap="$.put('/Zapp/{zapp_index}/Event', 5, null, 'int32');">
+
+  <div id="suuntoplus">
+
+    <div class="sp-t-m cm-mid p-hc" style="top:calc(11% - 50%e);">BILAN</div>
+    <div class="sp-t-s cm-mid" style="top:calc(20% - 50%e);left:calc(47% - 50%e);">FC</div>
+    <div class="sp-t-s cm-mid" style="top:calc(20% - 50%e);left:calc(77% - 50%e);">temps</div>
+
+    <!-- Plat -->
+    <div class="f-ico" style="top:calc(30% - 50%e);left:calc(21% - 50%e);">&#xF160;</div>
+    <div class="f-num sp-d-xs" style="top:calc(30% - 50%e);left:calc(47% - 50%e);">
+      <eval input="Zapp/{zapp_index}/Output/fp" outputFormat="script x => (x > 0 ? x : '--')" default="--" />
+    </div>
+    <div class="f-num sp-d-xs" style="top:calc(30% - 50%e);left:calc(77% - 50%e);">
+      <eval input="Zapp/{zapp_index}/Output/tp" outputFormat="Duration_Fourdigits" default="--" />
+    </div>
+
+    <!-- Montee -->
+    <div class="f-ico" style="top:calc(42% - 50%e);left:calc(21% - 50%e);">&#xF266;</div>
+    <div class="f-num sp-d-xs" style="top:calc(42% - 50%e);left:calc(47% - 50%e);">
+      <eval input="Zapp/{zapp_index}/Output/fm" outputFormat="script x => (x > 0 ? x : '--')" default="--" />
+    </div>
+    <div class="f-num sp-d-xs" style="top:calc(42% - 50%e);left:calc(77% - 50%e);">
+      <eval input="Zapp/{zapp_index}/Output/tm" outputFormat="Duration_Fourdigits" default="--" />
+    </div>
+
+    <!-- Descente -->
+    <div class="f-ico" style="top:calc(54% - 50%e);left:calc(21% - 50%e);">&#xF267;</div>
+    <div class="f-num sp-d-xs" style="top:calc(54% - 50%e);left:calc(47% - 50%e);">
+      <eval input="Zapp/{zapp_index}/Output/fd" outputFormat="script x => (x > 0 ? x : '--')" default="--" />
+    </div>
+    <div class="f-num sp-d-xs" style="top:calc(54% - 50%e);left:calc(77% - 50%e);">
+      <eval input="Zapp/{zapp_index}/Output/td" outputFormat="Duration_Fourdigits" default="--" />
+    </div>
+
+    <!-- VAM moyenne en montee -->
+    <div class="f-ico" style="top:calc(66% - 50%e);left:calc(21% - 50%e);">&#xF263;</div>
+    <div class="f-num sp-d-xs" style="top:calc(66% - 50%e);left:calc(47% - 50%e);">
+      <eval input="Zapp/{zapp_index}/Output/vm" outputFormat="script x => (x > 0 ? x : '--')" default="--" />
+    </div>
+    <div class="sp-t-s cm-mid" style="top:calc(66% - 50%e);left:calc(77% - 50%e);">m/h</div>
+
+    <!-- Temps au-dessus des cibles -->
+    <div class="sp-t-m sp-c-red" style="top:calc(78% - 50%e);left:calc(30% - 50%e);">Rouge</div>
+    <div class="f-num sp-d-xs" style="top:calc(78% - 50%e);left:calc(64% - 50%e);">
+      <eval input="Zapp/{zapp_index}/Output/tr" outputFormat="Duration_Fourdigits" default="--" />
+    </div>
+
+  </div>
+
+  <userInput>
+    <pushButton name="down" type="lock" onClick="$.put('/Zapp/{zapp_index}/Event', 5, null, 'int32');" />
+  </userInput>
+
+</uiView>

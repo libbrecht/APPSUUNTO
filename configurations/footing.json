@@ -1,0 +1,14 @@
+{
+  "cibles_A": "160 165 150",
+  "cibles_B": "150 155 148",
+  "plafond_A": "167",
+  "plafond_B": "160",
+  "plan_initial": "1",
+  "zones": "",
+  "marge": "3",
+  "seuils_vz": "300 150",
+  "persistance": "20",
+  "delai_alerte": "45",
+  "grace": "10",
+  "boire": "0"
+}

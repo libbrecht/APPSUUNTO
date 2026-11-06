@@ -1,0 +1,185 @@
+<!--
+  Trois Chiffres : ecran principal.
+  En haut : terrain et cible (ou message d'alerte). Au centre : FC en
+  direct, coloree. En bas : FC moyenne depuis le depart, et VAM en montee
+  ou allure lissee ailleurs. A droite : plan actif.
+
+  Tout l'etat visuel arrive par la sortie "ui" (entier empaquete, voir
+  paquetUi dans main.js) :
+    ui = parite + 2 * (entete + 11 * (couleur + 5 * (basDroite + 3 * plan)))
+
+  Bouton bas : appui court = bilan ; appui long (2 s) = bascule de plan
+  (avec confirmation). Les autres boutons gardent leur role natif.
+-->
+<uiView
+  onLoad="
+    var abonnement;
+    var couleurs;
+    var vueEntete;
+    var vueCouleur;
+    var vueBas;
+    var vuePlan;
+  "
+  onActivate="
+    couleurs = [
+      getStyle('css:.c-lightgrey', 'color'),
+      getStyle('css:.c-green', 'color'),
+      getStyle('css:.c-orange', 'color'),
+      getStyle('css:.c-red', 'color'),
+      getStyle('css:.cm-bgc', 'color')
+    ];
+    vueEntete = -1;
+    vueCouleur = -1;
+    vueBas = -1;
+    vuePlan = -1;
+    abonnement = $.subscribe('Zapp/{zapp_index}/Output/ui', function(v) {
+      var u = Math.floor(v / 2);
+      var h = u % 11;
+      u = Math.floor(u / 11);
+      var c = u % 5;
+      u = Math.floor(u / 5);
+      var b = u % 3;
+      var p = Math.floor(u / 3) % 2;
+      if (h != vueEntete) { navigate('#hd', h, true); vueEntete = h; }
+      if (c != vueCouleur) { setStyle('#fc', 'color', couleurs[c]); vueCouleur = c; }
+      if (b != vueBas) { navigate('#br', b, true); vueBas = b; }
+      if (p != vuePlan) { navigate('#pl', p, true); vuePlan = p; }
+    });
+  "
+  onDeactivate="
+    $.unsubscribe(abonnement);
+  ">
+
+  <div id="suuntoplus">
+
+    <!-- En-tête : terrain et cible, ou message -->
+    <uiViewSet id="hd" transition.type="crossfade" rollOver="both" transition.duration="0">
+      <!-- 0 : plat -->
+      <div class="selected">
+        <div class="p-hc sp-vertical-center" style="top:calc(18% - 50%e);">
+          <span class="f-ico">&#xF160;</span>
+          <span class="f-num sp-d-s" style="padding-left:6px;">
+            <eval input="Zapp/{zapp_index}/Output/cible" outputFormat="Count_Threedigits" default="--" />
+          </span>
+        </div>
+      </div>
+      <!-- 1 : montée -->
+      <div>
+        <div class="p-hc sp-vertical-center" style="top:calc(18% - 50%e);">
+          <span class="f-ico">&#xF266;</span>
+          <span class="f-num sp-d-s" style="padding-left:6px;">
+            <eval input="Zapp/{zapp_index}/Output/cible" outputFormat="Count_Threedigits" default="--" />
+          </span>
+        </div>
+      </div>
+      <!-- 2 : descente, la cible est un plafond -->
+      <div>
+        <div class="p-hc sp-vertical-center" style="top:calc(18% - 50%e);">
+          <span class="f-ico">&#xF267;</span>
+          <span class="sp-b-l" style="padding-left:6px;">≤</span>
+          <span class="f-num sp-d-s" style="padding-left:4px;">
+            <eval input="Zapp/{zapp_index}/Output/cible" outputFormat="Count_Threedigits" default="--" />
+          </span>
+        </div>
+      </div>
+      <!-- 3 : arrêt -->
+      <div>
+        <div class="sp-t-l p-hc" style="top:calc(18% - 50%e);">ARRÊT</div>
+      </div>
+      <!-- 4 : zone libre -->
+      <div>
+        <div class="sp-t-l p-hc" style="top:calc(18% - 50%e);">LIBRE</div>
+      </div>
+      <!-- 5 : alerte FC haute -->
+      <div>
+        <div class="sp-t-l sp-c-red p-hc" style="top:calc(18% - 50%e);">FC HAUTE</div>
+      </div>
+      <!-- 6 : alerte plafond -->
+      <div>
+        <div class="sp-t-l sp-c-red p-hc" style="top:calc(18% - 50%e);">PLAFOND</div>
+      </div>
+      <!-- 7 : rappel boire -->
+      <div>
+        <div class="p-hc sp-vertical-center sp-c-cyan" style="top:calc(18% - 50%e);">
+          <span class="f-ico">&#xE335;</span>
+          <span class="sp-t-l" style="padding-left:6px;">BOIRE</span>
+        </div>
+      </div>
+      <!-- 8 : capteur FC -->
+      <div>
+        <div class="sp-t-l sp-c-yellow p-hc" style="top:calc(18% - 50%e);">CAPTEUR FC</div>
+      </div>
+      <!-- 9 et 10 : bascule de plan effectuée -->
+      <div>
+        <div class="sp-t-l p-hc" style="top:calc(18% - 50%e);">PLAN A</div>
+      </div>
+      <div>
+        <div class="sp-t-l p-hc" style="top:calc(18% - 50%e);">PLAN B</div>
+      </div>
+    </uiViewSet>
+
+    <!-- Plan actif -->
+    <uiViewSet id="pl" transition.type="crossfade" rollOver="both" transition.duration="0">
+      <div class="selected">
+        <div class="sp-t-l cm-mid" style="top:calc(31% - 50%e);left:calc(84% - 50%e);">A</div>
+      </div>
+      <div>
+        <div class="sp-t-l cm-mid" style="top:calc(31% - 50%e);left:calc(84% - 50%e);">B</div>
+      </div>
+    </uiViewSet>
+
+    <!-- FC en direct, en très grand, colorée par rapport à la cible -->
+    <:if test="{{ IS_UI2 }}">
+      <div id="fc" class="f-num f-d-xxxl" style="top:calc(50% - 50%e);left:calc(50% - 50%e);">
+        <eval input="Zapp/{zapp_index}/Output/fc" outputFormat="script x => (x > 0 ? x : '--')" default="--" />
+      </div>
+    </:if>
+    <:else>
+      <div id="fc" class="f-num sp-d-xxl" style="top:calc(50% - 50%e);left:calc(50% - 50%e);">
+        <eval input="Zapp/{zapp_index}/Output/fc" outputFormat="script x => (x > 0 ? x : '--')" default="--" />
+      </div>
+    </:else>
+
+    <!-- Bas gauche : FC moyenne depuis le départ -->
+    <div class="f-ico cm-mid" style="top:calc(70% - 50%e);left:calc(30% - 50%e);">&#xF101;</div>
+    <div class="f-num sp-d-s" style="top:calc(80% - 50%e);left:calc(30% - 50%e);">
+      <eval input="Zapp/{zapp_index}/Output/fcm" outputFormat="script x => (x > 0 ? x : '--')" default="--" />
+    </div>
+    <div class="sp-t-s cm-mid" style="top:calc(90% - 50%e);left:calc(30% - 50%e);">moy</div>
+
+    <!-- Bas droite : VAM en montée, allure lissée ailleurs -->
+    <uiViewSet id="br" transition.type="crossfade" rollOver="both" transition.duration="0">
+      <!-- 0 : VAM de la montée en cours -->
+      <div>
+        <div class="f-ico cm-mid" style="top:calc(70% - 50%e);left:calc(70% - 50%e);">&#xF263;</div>
+        <div class="f-num sp-d-s" style="top:calc(80% - 50%e);left:calc(70% - 50%e);">
+          <eval input="Zapp/{zapp_index}/Output/vam" outputFormat="Count_Fourdigits" default="--" />
+        </div>
+        <div class="sp-t-s cm-mid" style="top:calc(90% - 50%e);left:calc(70% - 50%e);">m/h</div>
+      </div>
+      <!-- 1 : allure lissée sur 30 s -->
+      <div class="selected">
+        <div class="f-ico cm-mid" style="top:calc(70% - 50%e);left:calc(70% - 50%e);">&#xF103;</div>
+        <div class="f-num sp-d-s" style="top:calc(80% - 50%e);left:calc(70% - 50%e);">
+          <eval input="Zapp/{zapp_index}/Output/allure" outputFormat="Pace_Fourdigits" default="--" />
+        </div>
+        <div class="sp-t-s cm-mid" style="top:calc(90% - 50%e);left:calc(70% - 50%e);">/km</div>
+      </div>
+      <!-- 2 : à l'arrêt, pas d'allure -->
+      <div>
+        <div class="f-ico cm-mid" style="top:calc(70% - 50%e);left:calc(70% - 50%e);">&#xF103;</div>
+        <div class="f-num sp-d-s" style="top:calc(80% - 50%e);left:calc(70% - 50%e);">--</div>
+        <div class="sp-t-s cm-mid" style="top:calc(90% - 50%e);left:calc(70% - 50%e);">/km</div>
+      </div>
+    </uiViewSet>
+
+  </div>
+
+  <userInput>
+    <!-- type="action" : le verrouillage des boutons bloque aussi ces gestes -->
+    <pushButton name="down" type="action" longType="action" longPressDuration="2"
+      onClick="$.put('/Zapp/{zapp_index}/Event', 4, null, 'int32');"
+      onLongPress="$.put('/Zapp/{zapp_index}/Event', 1, null, 'int32');" />
+  </userInput>
+
+</uiView>

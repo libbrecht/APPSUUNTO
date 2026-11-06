@@ -1,0 +1,57 @@
+{
+  "name": "Trois Chiffres",
+  "version": "1.0",
+  "author": "Maxime Libbrecht",
+  "description": "Cible FC du terrain (montée, plat, descente) et alertes",
+  "type": "feature",
+  "usage": "workout",
+  "modificationTime": 1793965231,
+  "in": [
+    { "name": "hr", "source": "Activity/Move/-1/HeartRate/Current", "type": "subscribe" },
+    { "name": "vz", "source": "Activity/Move/-1/VerticalSpeed/Current", "type": "subscribe" },
+    { "name": "spd", "source": "Activity/Move/-1/Speed/Current", "type": "subscribe" },
+    { "name": "dist", "source": "Activity/Move/-1/Distance/Current", "type": "subscribe" },
+    { "name": "dur", "source": "Activity/Move/-1/Duration/Current", "type": "subscribe" }
+  ],
+  "out": [
+    { "name": "etat", "log": true, "shownName": "Terrain", "format": "Count_Twodigits" },
+    { "name": "cible", "log": true, "shownName": "Cible FC", "format": "Count_Threedigits" },
+    { "name": "couleur", "log": true, "shownName": "Couleur FC", "format": "Count_Twodigits" },
+    { "name": "plan", "log": true, "shownName": "Plan", "format": "Count_Twodigits" },
+    { "name": "fc" },
+    { "name": "fcm" },
+    { "name": "vam" },
+    { "name": "allure" },
+    { "name": "ui" },
+    { "name": "fp" },
+    { "name": "fm" },
+    { "name": "fd" },
+    { "name": "tp" },
+    { "name": "tm" },
+    { "name": "td" },
+    { "name": "vm" },
+    { "name": "tr" },
+    { "name": "np" },
+    { "name": "npc" }
+  ],
+  "template": [
+    { "name": "t.html" },
+    { "name": "b.html" },
+    { "name": "ca.html" },
+    { "name": "cb.html" }
+  ],
+  "settings": [
+    { "shownName": "Cibles plan A : plat montée descente", "path": "cibles_A", "type": "string", "maxLength": 20 },
+    { "shownName": "Cibles plan B : plat montée descente", "path": "cibles_B", "type": "string", "maxLength": 20 },
+    { "shownName": "Plafond plan A [bpm]", "path": "plafond_A", "type": "int", "min": 80, "max": 240 },
+    { "shownName": "Plafond plan B [bpm]", "path": "plafond_B", "type": "int", "min": 80, "max": 240 },
+    { "shownName": "Plan initial", "path": "plan_initial", "type": "enum", "values": ["A", "B"] },
+    { "shownName": "Zones par distance", "path": "zones", "type": "string", "maxLength": 120 },
+    { "shownName": "Marge avant le rouge [bpm]", "path": "marge", "type": "int", "min": 0, "max": 30 },
+    { "shownName": "Seuils vitesse verticale entrée sortie [m/h]", "path": "seuils_vz", "type": "string", "maxLength": 12 },
+    { "shownName": "Persistance [s]", "path": "persistance", "type": "int", "min": 1, "max": 600 },
+    { "shownName": "Délai avant alerte rouge [s]", "path": "delai_alerte", "type": "int", "min": 1, "max": 3600 },
+    { "shownName": "Grâce au départ [min]", "path": "grace", "type": "int", "min": 0, "max": 240 },
+    { "shownName": "Rappel boire, 0 pour désactiver [min]", "path": "boire", "type": "int", "min": 0, "max": 600 }
+  ]
+}

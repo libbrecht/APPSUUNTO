@@ -1,0 +1,37 @@
+<!--
+  Trois Chiffres : confirmation de bascule vers le plan A.
+  Appui court sur le bouton bas = oui ; bouton haut ou central = non.
+  Annulation automatique apres 10 s. Affiche les cibles du plan A
+  (plat montee descente) et son plafond.
+-->
+<uiView>
+  <div id="suuntoplus">
+    <userInput>
+      <pushButton name="down" type="lock" onClick="$.put('/Zapp/{zapp_index}/Event', 2, null, 'int32');" />
+      <pushButton name="up" type="lock" onClick="$.put('/Zapp/{zapp_index}/Event', 3, null, 'int32');" />
+      <pushButton name="next" type="lock" onClick="$.put('/Zapp/{zapp_index}/Event', 3, null, 'int32');" />
+    </userInput>
+
+    <:dialog
+      textBody="Passer en plan A ?"
+      btnTopText="Non"
+      btnBtmText="Oui"
+      btnBtmShapeClass="c-green" />
+
+    <div class="p-hc sp-vertical-center cm-mid" style="top:calc(62% - 50%e);">
+      <span class="sp-b-m">
+        <eval input="Zapp/{zapp_index}/Output/np" outputFormat="script x => Math.floor(Math.round(x) / 40000) + 50" default="--" />
+      </span>
+      <span class="sp-b-m" style="padding-left:6px;">
+        <eval input="Zapp/{zapp_index}/Output/np" outputFormat="script x => Math.floor(Math.round(x) / 200) % 200 + 50" default="--" />
+      </span>
+      <span class="sp-b-m" style="padding-left:6px;">
+        <eval input="Zapp/{zapp_index}/Output/np" outputFormat="script x => Math.round(x) % 200 + 50" default="--" />
+      </span>
+      <span class="sp-b-m" style="padding-left:8px;">max</span>
+      <span class="sp-b-m" style="padding-left:4px;">
+        <eval input="Zapp/{zapp_index}/Output/npc" outputFormat="Count_Threedigits" default="--" />
+      </span>
+    </div>
+  </div>
+</uiView>
